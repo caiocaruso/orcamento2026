@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orçamento 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f1117;
+  --surface: #181c26;
+  --card: #1e2333;
+  --border: #2a3045;
+  --accent: #4f8ef7;
+  --accent2: #34d399;
+  --accent3: #f97316;
+  --danger: #f43f5e;
+  --text: #e8eaf0;
+  --muted: #7b82a0;
+  --header-bg: #1a2140;
+  --total-bg: #232b44;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-serif; font-size: 13px; display: flex; flex-direction: column; position: fixed; top: 0; left: 0; right: 0; bottom: 0; overflow: hidden; }
+
+.topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 10px 16px; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.topbar-title { font-size: 15px; font-weight: 700; color: var(--accent); }
+.topbar-sub { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+.spacer { flex: 1; }
+.reset-btn { font-size: 10px; background: transparent; border: 1px solid var(--border); color: var(--muted); border-radius: 6px; padding: 4px 10px; cursor: pointer; font-family: 'Sora', sans-serif; }
+.reset-btn:hover { border-color: var(--danger); color: var(--danger); }
+
+.tabs-wrap { background: var(--surface); border-bottom: 1px solid var(--border); overflow-x: auto; flex-shrink: 0; scrollbar-width: none; }
+.tabs-wrap::-webkit-scrollbar { display: none; }
+.tabs { display: flex; white-space: nowrap; padding: 0 8px; }
+.tab { padding: 10px 14px; font-size: 11px; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; letter-spacing: 0.04em; }
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab.locked { color: var(--accent2); }
+.tab.locked.active { color: var(--accent2); border-bottom-color: var(--accent2); }
+
+.main { display: flex; flex: 1; min-height: 0; overflow: hidden; }
+.budget-panel { flex: 1; overflow-y: auto; padding: 14px; min-width: 0; }
+
+.chat-panel { width: 290px; min-width: 290px; border-left: 1px solid var(--border); display: flex; flex-direction: column; background: var(--surface); overflow: hidden; }
+.chat-header { padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.chat-dot { width: 6px; height: 6px; background: var(--accent2); border-radius: 50%; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
+.chat-messages { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.msg { padding: 8px 10px; border-radius: 10px; font-size: 11.5px; line-height: 1.5; }
+.msg.bot { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+.msg.user { background: var(--accent); color: #fff; align-self: flex-end; max-width: 85%; }
+.msg.error { background: #2d1a1f; border: 1px solid var(--danger); color: #ff8099; }
+.msg.success { background: #0d2a20; border: 1px solid var(--accent2); color: var(--accent2); }
+.thinking { display: flex; gap: 4px; align-items: center; padding: 10px; }
+.thinking span { width: 6px; height: 6px; background: var(--muted); border-radius: 50%; animation: bounce 1.2s infinite; }
+.thinking span:nth-child(2) { animation-delay: 0.2s; }
+.thinking span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes bounce { 0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-6px)} }
+.chat-input-wrap { padding: 10px; border-top: 1px solid var(--border); display: flex; gap: 6px; flex-shrink: 0; }
+.chat-input { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'Sora', sans-serif; font-size: 12px; padding: 8px 10px; outline: none; resize: none; height: 58px; }
+.chat-input:focus { border-color: var(--accent); }
+.chat-send { background: var(--accent); border: none; border-radius: 8px; color: #fff; cursor: pointer; font-size: 15px; width: 36px; align-self: flex-end; height: 36px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.chat-send:hover { background: #3a7de8; }
+.chat-send:disabled { background: var(--border); cursor: not-allowed; }
+
+.month-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.month-title { font-size: 15px; font-weight: 700; color: var(--accent); }
+.month-badge { font-size: 10px; background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px; color: var(--muted); }
+.month-badge.locked { border-color: var(--accent2); color: var(--accent2); }
+
+.summary-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 10px; }
+.summary-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+.s-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 3px; }
+.s-value { font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; }
+.c-a { color: var(--accent); }
+.c-b { color: var(--accent3); }
+.c-c { color: var(--accent2); }
+.c-d { color: var(--danger); }
+.c-m { color: var(--muted); }
+
+.payment-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; margin-bottom: 12px; }
+.payment-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; text-align: center; }
+.p-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
+.p-value { font-family: 'DM Mono', monospace; font-size: 11px; }
+
+.section { margin-bottom: 10px; }
+.section-title { font-size: 11px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 5px; }
+.table-wrap { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border); -webkit-overflow-scrolling: touch; }
+table { width: 100%; min-width: 360px; border-collapse: collapse; background: var(--card); }
+thead tr { background: var(--header-bg); }
+thead th { font-family: 'DM Mono', monospace; font-size: 9px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; padding: 7px 10px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--border); }
+thead th:first-child { text-align: left; }
+tbody tr { border-bottom: 1px solid var(--border); transition: background 0.12s; }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover:not(.total-row) { background: #232840; }
+td { padding: 6px 10px; font-family: 'DM Mono', monospace; font-size: 11px; text-align: right; white-space: nowrap; color: var(--text); }
+td:first-child { text-align: left; font-family: 'Sora', sans-serif; font-size: 11px; }
+.total-row { background: var(--total-bg); }
+.total-row td { font-weight: 600; font-size: 11px; padding: 7px 10px; color: var(--accent2); }
+.total-row td:first-child { font-family: 'Sora', sans-serif; }
+.zero { color: var(--muted); }
+.pos { color: var(--accent2); }
+.neg { color: var(--danger); }
+.amt { color: var(--accent3); }
+
+.annual-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(155px,1fr)); gap: 8px; margin-bottom: 16px; }
+.annual-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 11px; cursor: pointer; transition: border-color 0.15s; }
+.annual-card:hover { border-color: var(--accent); }
+.a-month { font-size: 11px; font-weight: 600; margin-bottom: 6px; }
+.a-row { display: flex; justify-content: space-between; font-family: 'DM Mono', monospace; font-size: 10px; margin-bottom: 2px; }
+.a-lbl { color: var(--muted); }
+.progress-bar { height: 3px; background: var(--border); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 2px; transition: width 0.3s; }
+
+@media (max-width: 700px) {
+  .main { flex-direction: column; }
+  .chat-panel { width: 100%; min-width: unset; border-left: none; border-top: 1px solid var(--border); height: 260px; min-height: 260px; }
+  .budget-panel { flex: 1; min-height: 0; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <div class="topbar-title">💰 Orçamento 2026</div>
+    <div class="topbar-sub">Controle pessoal de gastos</div>
+  </div>
+  <div class="spacer"></div>
+  <button class="reset-btn" onclick="resetAll()">⚠ Resetar dados</button>
+</div>
+
+<div class="tabs-wrap">
+  <div class="tabs" id="tabs"></div>
+</div>
+
+<div class="main">
+  <div class="budget-panel" id="budgetPanel"></div>
+  <div class="chat-panel">
+    <div class="chat-header"><div class="chat-dot"></div> Lançamentos</div>
+    <div class="chat-messages" id="chatMessages"></div>
+    <div class="chat-input-wrap">
+      <textarea class="chat-input" id="chatInput" placeholder="gastei 80 no supermercado no crédito..." onkeydown="handleKey(event)"></textarea>
+      <button class="chat-send" id="sendBtn" onclick="sendMessage()">➤</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const LOCKED = [0,1,2];
+const MJJ = [4,5,6];
+
+const BUDGET_PADRAO = {
+  'CASA': [
+    {name:'Aluguel', orcado:2780},
+    {name:'Luz', orcado:250},
+    {name:'Supermercado', orcado:1650},
+    {name:'Lavanderia', orcado:100},
+    {name:'Celular', orcado:60},
+    {name:'Itens para casa', orcado:100},
+  ],
+  'SAÚDE': [
+    {name:'Barbeiro', orcado:100},
+    {name:'Terapia', orcado:1050},
+  ],
+  'LAZER': [
+    {name:'Lazer geral', orcado:1000},
+    {name:'Comida fora (VR)', orcado:207},
+  ],
+  'TRANSPORTE': [
+    {name:'Uber pessoal', orcado:200},
+  ],
+  'TRABALHO': [
+    {name:'Alimentação trabalho (VR)', orcado:500},
+    {name:'Almoço trabalho (crédito)', orcado:200},
+    {name:'Transporte trabalho', orcado:0},
+  ],
+  'INVESTIMENTO': [
+    {name:'Aporte mensal', orcado:1200},
+  ],
+  'VIAGEM': [
+    {name:'Fundo RJ ⇄ SP', orcado:200},
+  ],
+  'ASSINATURAS': [
+    {name:'ChatGPT', orcado:100},
+  ],
+};
+
+const BUDGET_MJJ = {
+  'CASA': [
+    {name:'Aluguel', orcado:2780},
+    {name:'Luz', orcado:150},
+    {name:'Supermercado', orcado:1650},
+    {name:'Lavanderia', orcado:100},
+    {name:'Celular', orcado:60},
+    {name:'Itens para casa', orcado:0},
+  ],
+  'SAÚDE': [
+    {name:'Barbeiro', orcado:0},
+    {name:'Terapia', orcado:1050},
+  ],
+  'LAZER': [
+    {name:'Lazer geral', orcado:733},
+    {name:'Comida fora (VR)', orcado:207},
+  ],
+  'TRANSPORTE': [
+    {name:'Uber pessoal', orcado:200},
+  ],
+  'TRABALHO': [
+    {name:'Alimentação trabalho (VR)', orcado:500},
+    {name:'Almoço trabalho (crédito)', orcado:200},
+    {name:'Transporte trabalho', orcado:0},
+  ],
+  'INVESTIMENTO': [
+    {name:'Aporte mensal', orcado:1200},
+  ],
+  'VIAGEM': [
+    {name:'Fundo RJ ⇄ SP', orcado:200},
+  ],
+  'ASSINATURAS': [
+    {name:'ChatGPT', orcado:100},
+  ],
+  'RESTITUIÇÃO': [
+    {name:'Ajuste de caixa (fev)', orcado:567},
+  ],
+};
+
+const EMOJIS = {
+  'CASA':'🏠','SAÚDE':'🧘','LAZER':'🎯','TRANSPORTE':'🚗',
+  'TRABALHO':'💼','INVESTIMENTO':'📈','VIAGEM':'✈️','ASSINATURAS':'💳','RESTITUIÇÃO':'🔁'
+};
+
+function getBudget(i) { return MJJ.includes(i) ? BUDGET_MJJ : BUDGET_PADRAO; }
+
+function defaultMonth(i) {
+  const budget = getBudget(i);
+  const locked = LOCKED.includes(i);
+  const data = { payments: {VA:0, VR:0, 'Crédito':0, Dinheiro:0}, categories: {} };
+  for (const [cat, items] of Object.entries(budget)) {
+    data.categories[cat] = items.map(it => ({
+      name: it.name, orcado: it.orcado,
+      realizado: locked ? it.orcado : 0
+    }));
+  }
+  if (locked) {
+    const total = Object.values(data.categories).flat().reduce((s,it) => s+it.orcado, 0);
+    data.payments['Crédito'] = total;
+  }
+  return data;
+}
+
+function loadState() {
+  try {
+    const s = localStorage.getItem('orc2026v3');
+    if (s) return JSON.parse(s);
+  } catch(e) {}
+  const st = { months: {} };
+  for (let i = 0; i < 12; i++) st.months[i] = defaultMonth(i);
+  return st;
+}
+
+function saveState() { localStorage.setItem('orc2026v3', JSON.stringify(state)); }
+
+function resetAll() {
+  if (!confirm('Tem certeza? Todos os lançamentos serão apagados.')) return;
+  localStorage.removeItem('orc2026v3');
+  location.reload();
+}
+
+let state = loadState();
+let currentTab = 3;
+
+function fmt(n) { return n.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+function fmtR(n) { return 'R$\u00a0' + fmt(n); }
+function getTotal(data, field) { return Object.values(data.categories).flat().reduce((s,i) => s+(i[field]||0), 0); }
+function catTotal(items, field) { return items.reduce((s,i) => s+(i[field]||0), 0); }
+
+function renderTabs() {
+  const el = document.getElementById('tabs');
+  el.innerHTML = '';
+  const at = document.createElement('div');
+  at.className = 'tab' + (currentTab === 'annual' ? ' active' : '');
+  at.textContent = '📊 Anual';
+  at.onclick = () => { currentTab = 'annual'; render(); };
+  el.appendChild(at);
+  MONTHS.forEach((m, i) => {
+    const t = document.createElement('div');
+    t.className = 'tab' + (LOCKED.includes(i) ? ' locked' : '') + (currentTab === i ? ' active' : '');
+    t.textContent = m.slice(0,3).toUpperCase();
+    t.onclick = () => { currentTab = i; render(); };
+    el.appendChild(t);
+  });
+}
+
+function renderMonth(idx) {
+  const data = state.months[idx];
+  const locked = LOCKED.includes(idx);
+  const orc = getTotal(data,'orcado'), real = getTotal(data,'realizado'), saldo = orc-real;
+  let html = `
+    <div class="month-header">
+      <div class="month-title">📅 ${MONTHS[idx].toUpperCase()} / 2026</div>
+      <div class="month-badge ${locked?'locked':''}">${locked?'✅ Concluído':'🔄 Em andamento'}</div>
+    </div>
+    <div class="summary-grid">
+      <div class="summary-card"><div class="s-label">Orçado</div><div class="s-value c-a">${fmtR(orc)}</div></div>
+      <div class="summary-card"><div class="s-label">Realizado</div><div class="s-value c-b">${fmtR(real)}</div></div>
+      <div class="summary-card"><div class="s-label">Saldo</div><div class="s-value ${saldo>=0?'c-c':'c-d'}">${fmtR(saldo)}</div></div>
+    </div>
+    <div class="payment-grid">
+      ${['VA','VR','Crédito','Dinheiro'].map(m=>`
+        <div class="payment-card">
+          <div class="p-label">${m}</div>
+          <div class="p-value ${(data.payments[m]||0)>0?'c-b':'zero'}">${fmtR(data.payments[m]||0)}</div>
+        </div>`).join('')}
+    </div>`;
+  for (const [cat, items] of Object.entries(data.categories)) {
+    const co=catTotal(items,'orcado'), cr=catTotal(items,'realizado'), cs=co-cr;
+    html += `
+      <div class="section">
+        <div class="section-title">${EMOJIS[cat]||''} ${cat}</div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Subcategoria</th><th>Orçado</th><th>Realizado</th><th>Saldo</th></tr></thead>
+          <tbody>
+            ${items.map(it=>{const s=it.orcado-it.realizado;return`<tr>
+              <td>${it.name}</td>
+              <td class="c-m">${fmt(it.orcado)}</td>
+              <td class="${it.realizado===0?'zero':'amt'}">${fmt(it.realizado)}</td>
+              <td class="${s>0?'pos':s<0?'neg':'zero'}">${fmt(s)}</td>
+            </tr>`;}).join('')}
+            <tr class="total-row"><td>TOTAL ${cat}</td><td>${fmt(co)}</td><td>${fmt(cr)}</td><td>${fmt(cs)}</td></tr>
+          </tbody>
+        </table></div>
+      </div>`;
+  }
+  document.getElementById('budgetPanel').innerHTML = html;
+}
+
+function renderAnnual() {
+  let to=0, tr=0;
+  for(let i=0;i<12;i++){to+=getTotal(state.months[i],'orcado');tr+=getTotal(state.months[i],'realizado');}
+  let html=`
+    <div class="month-title" style="margin-bottom:12px">📊 VISÃO ANUAL — 2026</div>
+    <div class="summary-grid" style="margin-bottom:14px">
+      <div class="summary-card"><div class="s-label">Total Orçado</div><div class="s-value c-a">${fmtR(to)}</div></div>
+      <div class="summary-card"><div class="s-label">Total Realizado</div><div class="s-value c-b">${fmtR(tr)}</div></div>
+      <div class="summary-card"><div class="s-label">Saldo Anual</div><div class="s-value c-c">${fmtR(to-tr)}</div></div>
+    </div><div class="annual-grid">`;
+  for(let i=0;i<12;i++){
+    const d=state.months[i], o=getTotal(d,'orcado'), r=getTotal(d,'realizado'), s=o-r;
+    const pct=o>0?Math.min(100,(r/o)*100):0;
+    const color=pct>=100?'var(--danger)':pct>70?'var(--accent3)':'var(--accent2)';
+    html+=`<div class="annual-card" onclick="currentTab=${i};render()">
+      <div class="a-month">${MONTHS[i]} ${LOCKED.includes(i)?'✅':MJJ.includes(i)?'📋':''}</div>
+      <div class="a-row"><span class="a-lbl">Orçado</span><span class="c-a">${fmtR(o)}</span></div>
+      <div class="a-row"><span class="a-lbl">Realizado</span><span class="c-b">${fmtR(r)}</span></div>
+      <div class="a-row"><span class="a-lbl">Saldo</span><span class="${s>=0?'c-c':'c-d'}">${fmtR(s)}</span></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${color}"></div></div>
+    </div>`;
+  }
+  html+=`</div>`;
+  document.getElementById('budgetPanel').innerHTML = html;
+}
+
+function render() { renderTabs(); currentTab==='annual'?renderAnnual():renderMonth(currentTab); }
+
+function addMsg(text, type='bot') {
+  const el=document.getElementById('chatMessages');
+  const div=document.createElement('div');
+  div.className='msg '+type; div.innerHTML=text;
+  el.appendChild(div); el.scrollTop=el.scrollHeight;
+}
+function addThinking() {
+  const el=document.getElementById('chatMessages');
+  const div=document.createElement('div');
+  div.className='msg bot thinking';
+  div.innerHTML='<span></span><span></span><span></span>';
+  el.appendChild(div); el.scrollTop=el.scrollHeight;
+  return div;
+}
+function handleKey(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();} }
+
+async function sendMessage() {
+  const input=document.getElementById('chatInput');
+  const text=input.value.trim(); if(!text) return;
+  input.value='';
+  addMsg(text,'user');
+  const btn=document.getElementById('sendBtn'); btn.disabled=true;
+  const thinking=addThinking();
+  try {
+    const monthIdx=typeof currentTab==='number'?currentTab:3;
+    const locked=LOCKED.includes(monthIdx);
+    const data=state.months[monthIdx];
+    const catList=Object.entries(data.categories).map(([cat,items])=>`${cat}: ${items.map(i=>i.name).join(', ')}`).join('\n');
+    const sys=`Você é um assistente de controle de orçamento pessoal.
+Mês atual: ${MONTHS[monthIdx]}/2026${locked?' — CONCLUÍDO, não faça lançamentos.':''}
+
+Categorias e subcategorias disponíveis:
+${catList}
+
+Meios de pagamento: VA, VR, Crédito, Dinheiro. Padrão: Crédito.
+
+Se o usuário informar um gasto, responda SOMENTE com JSON (sem texto extra):
+{"action":"launch","category":"CATEGORIA_EXATA","subcategory":"Subcategoria exata","amount":0.00,"payment":"Crédito","description":"resumo"}
+
+Se não for lançamento, responda normalmente em texto.
+Se mês concluído, avise e pergunte se quer outro mês.
+Se não identificar categoria, pergunte.
+Responda sempre em português.`;
+
+    const GEMINI_KEY='AIzaSyBmIuoGUIMSImxERGz5VSwD6zhJ60gIhX8';
+    const resp=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:sys+'\nUsuário: '+text}]}],generationConfig:{maxOutputTokens:500,temperature:0.1}})
+    });
+    const result=await resp.json();
+    thinking.remove();
+    const raw=result.candidates?.[0]?.content?.parts?.[0]?.text?.trim()||'';
+    if(!raw) throw new Error('empty');
+    let parsed=null;
+    try{ const m=raw.match(/\{[\s\S]*\}/); if(m) parsed=JSON.parse(m[0]); }catch(e){}
+    if(parsed?.action==='launch'){
+      let found=false;
+      for(const [cat,items] of Object.entries(data.categories)){
+        if(cat===parsed.category){
+          const item=items.find(i=>i.name===parsed.subcategory);
+          if(item){
+            item.realizado+=parsed.amount;
+            const pm=['VA','VR','Crédito','Dinheiro'].includes(parsed.payment)?parsed.payment:'Crédito';
+            data.payments[pm]=(data.payments[pm]||0)+parsed.amount;
+            found=true; saveState(); render();
+            addMsg(`✅ <b>${parsed.description}</b><br>${fmtR(parsed.amount)} em <b>${parsed.subcategory}</b> via <b>${pm}</b>`,'success');
+            break;
+          }
+        }
+      }
+      if(!found) addMsg(`⚠️ Não encontrei "<b>${parsed.subcategory}</b>" em "<b>${parsed.category}</b>". Tente novamente.`,'error');
+    } else { addMsg(raw,'bot'); }
+  } catch(e){ thinking.remove(); addMsg('❌ Erro ao processar. Verifique sua conexão.','error'); console.error(e); }
+  btn.disabled=false;
+  document.getElementById('chatInput').focus();
+}
+
+render();
+addMsg('👋 Pronto! Pode lançar os gastos em linguagem natural.<br><br>Exemplos:<br>• <i>paguei 80 no supermercado no VR</i><br>• <i>gastei 50 de uber no crédito</i><br>• <i>terapia 350</i><br><br>O lançamento vai pro mês da aba ativa. 💡');
+</script>
+</body>
+</html>
